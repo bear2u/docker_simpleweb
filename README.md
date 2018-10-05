@@ -190,4 +190,51 @@ CONTAINER ID        IMAGE                COMMAND             CREATED            
 Dockerfile         README.md          index.js           node_modules       package-lock.json  package.json
 ```
 
+# 작업내용 변경 문제
 
+서버쪽에서 변경 사항이 생긴 경우 전체 파일이 변경되서 npm install을 해줘야 하는 경우가 생긴다. 
+이런 경우를 대비해서 ```package.json``` 의 경우에만 캐싱을 따로 처리해주자. 
+
+```cmd
+# Specify a base image
+FROM node:alpine
+
+WORKDIR /user/app
+
+# install some depenendencies
+COPY ./package.json ./
+RUN npm install
+# Caching
+COPY ./ ./
+
+# Default command
+CMD ["npm", "start"] 
+```
+
+``index.js`` 에서 변경된 경우 의존성은 캐싱되서 그대로고 소스만 변경해서 만들어준다. 
+
+```cmd
+> Dockerfile
+
+PS G:\workspace_docker\simpleweb> docker build -t gdgbusan/simpleweb .
+Sending build context to Docker daemon  69.63kB
+Step 1/6 : FROM node:alpine
+ ---> 5206c0dd451a
+Step 2/6 : WORKDIR /user/app
+ ---> Using cache
+ ---> f86704b2b479
+Step 3/6 : COPY ./package.json ./
+ ---> Using cache
+ ---> a2309c91cf66
+Step 4/6 : RUN npm install
+ ---> Using cache
+ ---> 67444f1d46ea
+Step 5/6 : COPY ./ ./ //<-- 캐싱이 안됨
+ ---> 9e44a0ef1b60
+Step 6/6 : CMD ["npm", "start"]
+ ---> Using cache
+ ---> cff8acc3464b
+Successfully built cff8acc3464b
+Successfully tagged gdgbusan/simpleweb:latest
+
+```
